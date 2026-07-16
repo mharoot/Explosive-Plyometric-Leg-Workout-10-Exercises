@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plyometrics Coach</title>
+<style>
+  :root{
+    --bg:#0b0d12; --card:#141822; --card2:#1a1f2a; --line:#262d3a;
+    --ink:#eef1f6; --dim:#98a2b3; --accent:#ff6a3d;
+    --work:#ff7a3d; --rest:#26c6c0; --idle:#5b6472; --ok:#38d39f;
+    --maxw:1760px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 640px at 50% -260px,#161c28,var(--bg)) fixed;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 clamp(12px,3vw,36px)}
+
+  /* ---- top bar ---- */
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(11,13,18,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0}
+  .brand{font-weight:800;letter-spacing:.6px;margin-right:auto;display:flex;align-items:center;gap:10px;font-size:17px}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--idle);box-shadow:0 0 12px var(--idle);transition:background .25s,box-shadow .25s}
+  body[data-state=work] .brand .dot{background:var(--work);box-shadow:0 0 14px var(--work)}
+  body[data-state=rest] .brand .dot{background:var(--rest);box-shadow:0 0 14px var(--rest)}
+  .gclock{font-size:19px;font-weight:800;padding:5px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-width:74px;text-align:center}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  .seg button{background:transparent;color:var(--dim);border:0;padding:9px 16px;font-weight:800;cursor:pointer;font-size:14px}
+  .seg button.on{background:var(--accent);color:#141414}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:10px;font-weight:800;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:#3a4354}
+  .btn.primary-btn{background:var(--accent);color:#141414;border-color:transparent}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .tgl{width:42px;height:38px;justify-content:center;padding:0;font-size:16px}
+  .tgl.off{opacity:.4}
+
+  /* ---- feed ---- */
+  main{padding-bottom:64px}
+  .hint{color:var(--dim);font-size:13px;line-height:1.55;margin:16px 0 2px}
+  .hint b{color:var(--ink)}
+  #summary{display:none;margin:16px 0 4px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#18202f,var(--card))}
+  #summary.show{display:block}
+  .sum-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:18px}
+  .sum-sub{color:var(--dim);margin:6px 0 12px}
+  .sum-table{width:100%;border-collapse:collapse}
+  .sum-table td{padding:8px 6px;border-bottom:1px solid var(--line);color:var(--dim)}
+  .sum-table tr:last-child td{border-bottom:0}
+  .sum-table td:first-child{color:var(--ink);font-weight:600}
+  .sum-table td:last-child{text-align:right}
+
+  #feed{padding-top:14px}
+  .card{--st:var(--idle);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px;transition:border-color .25s,box-shadow .25s,opacity .25s}
+  body[data-state=work] .card.active{--st:var(--work)}
+  body[data-state=rest] .card.active{--st:var(--rest)}
+  .card.active{border-color:var(--st);box-shadow:0 0 0 1px var(--st),0 20px 54px -24px var(--st)}
+  .card.dim{opacity:.5}
+  body.paused .card.active{outline:2px dashed var(--dim);outline-offset:3px}
+
+  .card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .ttl{font-size:19px;font-weight:800;display:flex;align-items:center;gap:12px}
+  .idx{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--card2);border:1px solid var(--line);font-size:14px;color:var(--dim);flex:0 0 auto}
+  .card.active .idx{background:var(--st);color:#141414;border-color:transparent}
+  .head-meta{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--dim);font-weight:600;font-size:14px}
+  .done-badge{color:var(--ok);border:1px solid var(--ok);padding:2px 9px;border-radius:20px;font-size:12px}
+
+  .card-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;align-items:stretch}
+  @media(max-width:860px){.card-grid{grid-template-columns:1fr}}
+
+  .stage-wrap{display:flex;flex-direction:column}
+  .stage{position:relative;background:#0e1119;border:1px solid var(--line);border-radius:12px;aspect-ratio:4/3;overflow:hidden;display:grid;place-items:center}
+  .stage-label{position:absolute;color:#39424f;font-weight:800;font-size:clamp(15px,2.6vw,26px);letter-spacing:1px;text-transform:uppercase;text-align:center;padding:0 12px}
+  .stage-img{position:relative;width:100%;height:100%;object-fit:contain;display:block;cursor:pointer}
+  .phase-tag{position:absolute;left:12px;top:12px;padding:6px 13px;border-radius:20px;font-weight:800;font-size:12px;letter-spacing:1.5px;background:var(--st);color:#141414;box-shadow:0 5px 18px -5px var(--st)}
+  .thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+  .thumb{width:72px;height:72px;flex:0 0 auto;object-fit:cover;border-radius:9px;border:2px solid transparent;background:#0e1119;cursor:pointer;opacity:.7;transition:opacity .15s}
+  .thumb:hover{opacity:1}
+  .thumb.sel{border-color:var(--accent);opacity:1}
+  .thumb.broken{opacity:0}
+
+  .controls{display:flex;flex-direction:column;gap:14px}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:11px;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card2)}
+  .st-btn{width:38px;height:42px;border:0;background:transparent;color:var(--ink);font-size:20px;cursor:pointer;flex:0 0 auto}
+  .st-btn:hover{background:#232b39}
+  .stepper input{width:100%;min-width:0;border:0;background:transparent;color:var(--ink);text-align:center;font-size:17px;font-weight:800;font-family:ui-monospace,Menlo,monospace;-moz-appearance:textfield}
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  body.manual .work-field{display:none}
+  .note{font-size:12.5px;color:var(--dim);margin-top:-4px}
+
+  .phase{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+  .phase-idle{color:var(--dim);font-weight:700;padding:8px 0}
+  .phase-state{font-weight:800;letter-spacing:2px;color:var(--st);font-size:13px}
+  .phase-num{font-size:46px;font-weight:800;line-height:1.02}
+  .phase-sub{color:var(--dim);font-weight:600;font-size:13px}
+  .primary{width:100%;padding:14px;border-radius:12px;border:0;background:var(--st);color:#141414;font-weight:800;font-size:16px;cursor:pointer}
+  .primary:hover{filter:brightness(1.06)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body class="manual" data-state="idle">
+
+<header class="topbar">
+  <div class="topbar-inner wrap">
+    <div class="brand"><span class="dot"></span> PLYO COACH</div>
+    <div class="seg" role="tablist" aria-label="Mode">
+      <button id="segManual" class="on">Manual</button>
+      <button id="segAuto">Auto</button>
+    </div>
+    <button id="startBtn" class="btn primary-btn">▶ Start</button>
+    <button id="pauseBtn" class="btn" disabled>⏸ Pause</button>
+    <button id="endBtn" class="btn" disabled>■ End</button>
+    <div id="gclock" class="gclock mono">0:00</div>
+    <button id="voiceBtn" class="btn tgl" title="Voice cues">🔊</button>
+    <button id="soundBtn" class="btn tgl" title="Beeps">♪</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="hint">
+    <b>Manual</b> — do your set, then tap <b>Done</b> and the rest clock starts &amp; counts you into the next set.
+    &nbsp;•&nbsp; <b>Auto</b> — set a Work time per exercise, hit Start, and the whole circuit runs hands-free (work → rest → next).
+    Edit <b>Sets / Reps / Rest</b> on any card anytime; ⏸ pauses everything.
+  </p>
+  <section id="summary"></section>
+  <div id="feed"></div>
+</main>
+
+<script>
+/* ---------------- data: your exercises + your image files ---------------- */
+const BASE = './leg-workouts/explosive/plyometrics-no-weights/';
+const EX = [
+  {id:'jump-squats', name:'Jump Squats', sets:3, reps:10, rest:60, note:'', dir:'jump-squats',
+   imgs:['Screenshot_20260714_163337_Chrome.jpg','Screenshot_20260714_163401_Chrome.jpg','Screenshot_20260714_163416_Chrome.jpg','Screenshot_20260714_163432_Chrome.jpg','Screenshot_20260714_163458_Chrome.jpg']},
+  {id:'jump-lunges', name:'Jump Lunges', sets:3, reps:10, rest:60, note:'', dir:'jump-lunges',
+   imgs:['Screenshot_20260714_163610_Chrome.jpg','Screenshot_20260714_163627_Chrome.jpg','Screenshot_20260714_163712_Chrome.jpg','Screenshot_20260714_163740_Chrome.jpg','Screenshot_20260714_163805_Chrome.jpg','Screenshot_20260714_163818_Chrome.jpg','Screenshot_20260714_163828_Chrome.jpg','Screenshot_20260714_163836_Chrome.jpg','Screenshot_20260714_163841_Chrome.jpg','Screenshot_20260714_163855_Chrome.jpg']},
+  {id:'lateral-bounds', name:'Lateral Bounds', sets:3, reps:10, rest:60, note:'', dir:'lateral-bounds',
+   imgs:['Screenshot_20260714_163907_Chrome.jpg','Screenshot_20260714_163933_Chrome.jpg','Screenshot_20260714_163940_Chrome.jpg','Screenshot_20260714_163949_Chrome.jpg','Screenshot_20260714_164014_Chrome.jpg','Screenshot_20260714_164016_Chrome.jpg']},
+  {id:'a-skips', name:'A-Skips', sets:3, reps:30, rest:60, note:'15 each leg', dir:'a-skips',
+   imgs:['Screenshot_20260714_164024_Chrome.jpg','Screenshot_20260714_164028_Chrome.jpg','Screenshot_20260714_164030_Chrome.jpg','Screenshot_20260714_164032_Chrome.jpg','Screenshot_20260714_164034_Chrome.jpg','Screenshot_20260714_164036_Chrome.jpg']},
+  {id:'reverse-lunge-knee-drive', name:'Reverse Lunge Knee Drive', sets:3, reps:10, rest:30, note:'5 each leg', dir:'reverse-lunge-knee-drive',
+   imgs:['Screenshot_20260714_164056_Chrome.jpg','Screenshot_20260714_164057_Chrome.jpg','Screenshot_20260714_164059_Chrome.jpg','Screenshot_20260714_164101_Chrome.jpg']},
+  {id:'tuck-jumps', name:'Tuck Jumps', sets:3, reps:25, rest:90, note:'', dir:'tuck-jumps',
+   imgs:['Screenshot_20260714_164126_Chrome.jpg','Screenshot_20260714_164132_Chrome.jpg','Screenshot_20260714_164142_Chrome.jpg','Screenshot_20260714_164147_Chrome.jpg']},
+  {id:'high-knees', name:'High Knees', sets:3, reps:30, rest:60, note:'15 each leg', dir:'high-knees',
+   imgs:['Screenshot_20260714_164155_Chrome.jpg','Screenshot_20260714_164158_Chrome.jpg','Screenshot_20260714_164200_Chrome.jpg','Screenshot_20260714_164202_Chrome.jpg','Screenshot_20260714_164205_Chrome.jpg','Screenshot_20260714_164215_Chrome.jpg','Screenshot_20260714_164217_Chrome.jpg']},
+  {id:'heel-flicks', name:'Heel Flicks', sets:3, reps:30, rest:60, note:'15 each leg', dir:'heel-flicks',
+   imgs:['Screenshot_20260714_164225_Chrome.jpg','Screenshot_20260714_164228_Chrome.jpg','Screenshot_20260714_164230_Chrome.jpg','Screenshot_20260714_164236_Chrome.jpg','Screenshot_20260714_164237_Chrome.jpg']},
+  {id:'kneeling-jumps', name:'Kneeling Jumps', sets:3, reps:10, rest:60, note:'', dir:'kneeling-jumps',
+   imgs:['Screenshot_20260714_164249_Chrome.jpg','Screenshot_20260714_164251_Chrome.jpg','Screenshot_20260714_164255_Chrome.jpg','Screenshot_20260714_164303_Chrome.jpg','Screenshot_20260714_164321_Chrome.jpg','Screenshot_20260714_164322_Chrome.jpg','Screenshot_20260714_164329_Chrome.jpg','Screenshot_20260714_164331_Chrome.jpg']},
+  {id:'calve-jumps', name:'Calve Jumps', sets:3, reps:20, rest:30, note:'', dir:'calve-jumps',
+   imgs:['Screenshot_20260714_164336_Chrome.jpg','Screenshot_20260714_164339_Chrome.jpg','Screenshot_20260714_164341_Chrome.jpg','Screenshot_20260714_164343_Chrome.jpg','Screenshot_20260714_164344_Chrome.jpg']},
+];
+EX.forEach(e=>{ e.work=Math.min(60,Math.max(20,e.reps*2)); e.completed=0; e.timeMs=0; });
+const imgURL=(ex,f)=>BASE+ex.dir+'/'+f;
+
+/* ---------------- build the cards ---------------- */
+function field(label,key,val,min,max,extra){
+  return '<div class="field '+(extra||'')+'">'
+    +'<label>'+label+'</label>'
+    +'<div class="stepper">'
+    +'<button class="st-btn" data-step="'+key+'" data-dir="-1" aria-label="decrease '+label+'">\u2212</button>'
+    +'<input type="number" data-input="'+key+'" value="'+val+'" min="'+min+'" max="'+max+'" inputmode="numeric">'
+    +'<button class="st-btn" data-step="'+key+'" data-dir="1" aria-label="increase '+label+'">+</button>'
+    +'</div></div>';
+}
+function cardHTML(ex,i){
+  const thumbs = ex.imgs.map((f,idx)=>
+    '<img class="thumb" data-idx="'+idx+'" src="'+imgURL(ex,f)+'" alt="'+ex.name+' frame '+(idx+1)+'" loading="lazy" onerror="this.classList.add(\'broken\')">'
+  ).join('');
+  return ''
+  +'<section class="card" id="card-'+ex.id+'" data-i="'+i+'">'
+  +  '<div class="card-head">'
+  +    '<div class="ttl"><span class="idx">'+(i+1)+'</span> '+ex.name+'</div>'
+  +    '<div class="head-meta">'
+  +      '<span class="done-badge" data-done hidden>\u2713 done</span>'
+  +      '<span class="ex-time mono" data-time>00:00</span>'
+  +      '<span data-prog>0/'+ex.sets+'</span>'
+  +    '</div>'
+  +  '</div>'
+  +  '<div class="card-grid">'
+  +    '<div class="stage-wrap">'
+  +      '<div class="stage">'
+  +        '<span class="stage-label">'+ex.name+'</span>'
+  +        '<img class="stage-img" data-stage alt="'+ex.name+' demonstration">'
+  +        '<div class="phase-tag" data-ptag hidden></div>'
+  +      '</div>'
+  +      '<div class="thumbs" data-thumbs>'+thumbs+'</div>'
+  +    '</div>'
+  +    '<div class="controls">'
+  +      '<div class="fields">'
+  +        field('Sets','sets',ex.sets,1,20,'')
+  +        field('Reps','reps',ex.reps,1,300,'')
+  +        field('Rest (s)','rest',ex.rest,0,600,'')
+  +        field('Work (s)','work',ex.work,5,600,'work-field')
+  +      '</div>'
+  +      (ex.note?'<div class="note">'+ex.note+'</div>':'')
+  +      '<div class="phase">'
+  +        '<span class="phase-idle" data-idle>Ready when you are</span>'
+  +        '<div class="phase-live" data-live hidden>'
+  +          '<div class="phase-state" data-pstate>WORK</div>'
+  +          '<div class="phase-num mono" data-pnum>0:00</div>'
+  +          '<div class="phase-sub" data-psub></div>'
+  +        '</div>'
+  +        '<button class="primary" data-primary hidden>Done</button>'
+  +      '</div>'
+  +    '</div>'
+  +  '</div>'
+  +'</section>';
+}
+
+const feed=document.getElementById('feed');
+feed.innerHTML=EX.map(cardHTML).join('');
+
+function setStage(r,idx){ r.stage.style.opacity=1; r.stage.src=imgURL(r.ex,r.ex.imgs[idx]); }
+function selThumb(r,idx){ r.thumbs.forEach((t,k)=>t.classList.toggle('sel',k===idx)); }
+
+const cardRefs = EX.map((ex,i)=>{
+  const el=document.getElementById('card-'+ex.id);
+  const q=s=>el.querySelector(s);
+  const r={
+    ex,el,
+    time:q('[data-time]'), prog:q('[data-prog]'), done:q('[data-done]'),
+    stage:q('[data-stage]'), thumbs:[].slice.call(el.querySelectorAll('.thumb')),
+    idle:q('[data-idle]'), live:q('[data-live]'),
+    pstate:q('[data-pstate]'), pnum:q('[data-pnum]'), psub:q('[data-psub]'),
+    ptag:q('[data-ptag]'), primary:q('[data-primary]'),
+    inp:{ sets:q('[data-input="sets"]'), reps:q('[data-input="reps"]'), rest:q('[data-input="rest"]'), work:q('[data-input="work"]') },
+    frame:0
+  };
+  r.stage.addEventListener('error',()=>{ r.stage.style.opacity=0; });
+  setStage(r,0); selThumb(r,0);
+  r.stage.addEventListener('click',()=>{ r.frame=(r.frame+1)%ex.imgs.length; setStage(r,r.frame); selThumb(r,r.frame); });
+  r.thumbs.forEach((t,idx)=>t.addEventListener('click',()=>{ r.frame=idx; setStage(r,idx); selThumb(r,idx); }));
+  el.querySelectorAll('.st-btn').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.step, dir=+b.dataset.dir, inp=r.inp[k];
+    const mn=+inp.min, mx=+inp.max; let v=(parseInt(inp.value)||0)+dir; v=Math.max(mn,Math.min(mx,v)); inp.value=v; onField(i);
+  }));
+  Object.keys(r.inp).forEach(k=>{ if(r.inp[k]) r.inp[k].addEventListener('change',()=>onField(i)); });
+  r.primary.addEventListener('click',onPrimary);
+  return r;
+});
+
+/* ---------------- state ---------------- */
+let state='idle', exIndex=0, setNum=1, running=false, paused=false;
+let globalMs=0, phaseMs=0, lastTick=0, lastBeep=-1;
+let mainTimer=null, slideTimer=null;
+let voice=true, sound=true;
+
+const $=id=>document.getElementById(id);
+const gclock=$('gclock'), startBtn=$('startBtn'), pauseBtn=$('pauseBtn'), endBtn=$('endBtn'),
+      segM=$('segManual'), segA=$('segAuto'), voiceBtn=$('voiceBtn'), soundBtn=$('soundBtn'),
+      summary=$('summary');
+
+const now=()=>performance.now();
+function fmt(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60), ss=s%60; return m+':'+String(ss).padStart(2,'0'); }
+function mode(){ return document.body.classList.contains('auto')?'auto':'manual'; }
+function liveVal(i,key){ const v=parseInt(cardRefs[i].inp[key].value); return isNaN(v)?0:v; }
+function onField(i){ const s=liveVal(i,'sets'); cardRefs[i].prog.textContent=(EX[i].completed||0)+'/'+s; }
+
+/* ---------------- audio ---------------- */
+let AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
+function beep(freq,dur,vol){ if(!sound) return; try{ const c=ac(); if(!c) return; const o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(c.destination); const t=c.currentTime; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur); }catch(e){} }
+function say(text){ if(!voice) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=1; u.pitch=1; speechSynthesis.speak(u); }catch(e){} }
+
+/* ---------------- mode + toggles ---------------- */
+function setMode(m){
+  const auto=m==='auto';
+  document.body.classList.toggle('auto',auto);
+  document.body.classList.toggle('manual',!auto);
+  segM.classList.toggle('on',!auto); segA.classList.toggle('on',auto);
+  if(running) updatePrimaryLabel();
+}
+segM.onclick=()=>setMode('manual');
+segA.onclick=()=>setMode('auto');
+voiceBtn.onclick=()=>{ voice=!voice; voiceBtn.classList.toggle('off',!voice); if(!voice){ try{speechSynthesis.cancel();}catch(e){} } };
+soundBtn.onclick=()=>{ sound=!sound; soundBtn.classList.toggle('off',!sound); };
+
+/* ---------------- controls ---------------- */
+startBtn.onclick=()=>{ if(!running) begin(); };
+pauseBtn.onclick=togglePause;
+endBtn.onclick=()=>{ if(running) finish(true); };
+
+function begin(){
+  ac();
+  resetProgress();
+  running=true; paused=false; globalMs=0; lastTick=now();
+  exIndex=0; setNum=1;
+  summary.classList.remove('show');
+  startBtn.disabled=true; startBtn.textContent='▶ Start';
+  pauseBtn.disabled=false; pauseBtn.textContent='⏸ Pause';
+  endBtn.disabled=false;
+  mainTimer=setInterval(tick,100);
+  slideTimer=setInterval(()=>{ if(running&&!paused&&state==='work'){ const r=cardRefs[exIndex]; r.frame=(r.frame+1)%r.ex.imgs.length; setStage(r,r.frame); selThumb(r,r.frame); } },650);
+  enterWork();
+}
+
+function resetProgress(){
+  EX.forEach((e,i)=>{
+    e.completed=0; e.timeMs=0;
+    const r=cardRefs[i];
+    r.done.hidden=true; r.time.textContent='00:00'; r.prog.textContent='0/'+liveVal(i,'sets');
+    r.el.classList.remove('active','dim'); r.live.hidden=true; r.idle.hidden=false; r.primary.hidden=true; r.ptag.hidden=true;
+    r.frame=0; setStage(r,0); selThumb(r,0);
+  });
+  document.body.dataset.state='idle';
+}
+
+function activate(i){
+  cardRefs.forEach((r,idx)=>{
+    const on=idx===i;
+    r.el.classList.toggle('active',on);
+    r.el.classList.toggle('dim',running&&!on);
+    r.live.hidden=!on; r.idle.hidden=on; r.primary.hidden=!on;
+    if(!on) r.ptag.hidden=true;
+  });
+}
+function scrollTo(r){ try{ r.el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
+
+function enterWork(){
+  state='work'; document.body.dataset.state='work'; phaseMs=0; lastBeep=-1;
+  activate(exIndex);
+  const ex=EX[exIndex], r=cardRefs[exIndex];
+  r.ptag.hidden=false; r.ptag.textContent='WORK';
+  render(); updatePrimaryLabel(); scrollTo(r);
+  say(ex.name+'. Set '+setNum+'. Go.');
+  beep(720,.09,.25); setTimeout(()=>beep(970,.09,.25),120);
+}
+
+function enterRest(){
+  state='rest'; document.body.dataset.state='rest'; phaseMs=0; lastBeep=-1;
+  const r=cardRefs[exIndex];
+  r.ptag.hidden=false; r.ptag.textContent='REST';
+  render(); updatePrimaryLabel();
+  say('Rest.');
+  beep(520,.12,.22);
+}
+
+function finishSet(){
+  const ex=EX[exIndex], r=cardRefs[exIndex], s=liveVal(exIndex,'sets');
+  ex.completed=Math.min(s,setNum);
+  r.prog.textContent=ex.completed+'/'+s;
+  if(exIndex===EX.length-1 && setNum>=s){ finish(false); return; }
+  enterRest();
+}
+
+function afterRest(){
+  const s=liveVal(exIndex,'sets');
+  if(setNum<s){ setNum++; enterWork(); return; }
+  const r=cardRefs[exIndex];
+  r.done.hidden=false;
+  r.el.classList.remove('active','dim'); r.live.hidden=true; r.idle.hidden=false; r.primary.hidden=true; r.ptag.hidden=true;
+  if(exIndex<EX.length-1){ exIndex++; setNum=1; enterWork(); }
+  else finish(false);
+}
+
+function onPrimary(){ if(!running) return; if(state==='work') finishSet(); else if(state==='rest') afterRest(); }
+
+function updatePrimaryLabel(){
+  const r=cardRefs[exIndex]; if(!r) return;
+  if(state==='work') r.primary.textContent = mode()==='auto' ? 'Skip to Rest \u23ED' : '\u2713 Done \u00b7 Start Rest';
+  else if(state==='rest') r.primary.textContent='Skip Rest \u23ED';
+}
+
+function render(){
+  const r=cardRefs[exIndex], s=liveVal(exIndex,'sets');
+  if(state==='work'){
+    r.pstate.textContent='WORK';
+    r.psub.textContent='Set '+setNum+' of '+s+' \u00b7 Target '+liveVal(exIndex,'reps');
+    r.pnum.textContent = mode()==='auto' ? fmt(liveVal(exIndex,'work')) : '0:00';
+  } else if(state==='rest'){
+    r.pstate.textContent='REST';
+    r.psub.textContent = setNum<s ? ('Next: Set '+(setNum+1)+' of '+s)
+                       : (exIndex<EX.length-1 ? ('Next: '+EX[exIndex+1].name) : 'Final rest');
+    r.pnum.textContent=fmt(liveVal(exIndex,'rest'));
+  }
+}
+
+function togglePause(){
+  if(!running) return;
+  paused=!paused;
+  pauseBtn.textContent=paused?'▶ Resume':'⏸ Pause';
+  document.body.classList.toggle('paused',paused);
+  if(paused){ say('Paused'); } else { lastTick=now(); }
+}
+
+function cd(rem){
+  const s=Math.ceil(rem);
+  if(s<=3 && s>0 && s!==lastBeep){ lastBeep=s; beep(s===1?1150:820,.1,.28); }
+}
+
+function tick(){
+  const t=now(), dt=t-lastTick; lastTick=t;
+  if(!running||paused||state==='finished') return;
+  globalMs+=dt; EX[exIndex].timeMs+=dt; phaseMs+=dt;
+  gclock.textContent=fmt(globalMs/1000);
+  const r=cardRefs[exIndex];
+  r.time.textContent=fmt(EX[exIndex].timeMs/1000);
+  if(state==='work'){
+    if(mode()==='auto'){
+      const rem=liveVal(exIndex,'work')-phaseMs/1000;
+      r.pnum.textContent=fmt(Math.ceil(rem)); cd(rem);
+      if(rem<=0){ finishSet(); return; }
+    } else {
+      r.pnum.textContent=fmt(Math.floor(phaseMs/1000));
+    }
+  } else if(state==='rest'){
+    const rem=liveVal(exIndex,'rest')-phaseMs/1000;
+    r.pnum.textContent=fmt(Math.ceil(rem)); cd(rem);
+    if(rem<=0){ afterRest(); return; }
+  }
+}
+
+function finish(early){
+  running=false; clearInterval(mainTimer); clearInterval(slideTimer);
+  state='finished'; document.body.dataset.state='idle';
+  cardRefs.forEach(r=>{ r.el.classList.remove('active','dim'); r.live.hidden=true; r.idle.hidden=false; r.primary.hidden=true; r.ptag.hidden=true; });
+  startBtn.disabled=false; startBtn.textContent='\u21BB Restart';
+  pauseBtn.disabled=true; pauseBtn.textContent='⏸ Pause';
+  endBtn.disabled=true;
+  document.body.classList.remove('paused');
+  showSummary(early);
+  say(early?'Workout ended.':'Workout complete. Great work.');
+}
+
+function showSummary(early){
+  let doneSets=0, plannedSets=0;
+  const rows=EX.map((e,i)=>{ const s=liveVal(i,'sets'); doneSets+=e.completed; plannedSets+=s;
+    return '<tr><td>'+(i+1)+'. '+e.name+'</td><td>'+e.completed+'/'+s+' sets</td><td class="mono">'+fmt(e.timeMs/1000)+'</td></tr>'; }).join('');
+  summary.innerHTML='<div class="sum-head"><strong>'+(early?'Workout ended':'Workout complete \uD83C\uDF89')+'</strong>'
+    +'<span class="gclock mono">'+fmt(globalMs/1000)+'</span></div>'
+    +'<div class="sum-sub">'+doneSets+' of '+plannedSets+' sets completed</div>'
+    +'<table class="sum-table">'+rows+'</table>';
+  summary.classList.add('show');
+  try{ summary.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+}
+
+/* keyboard: Space = done/skip, P = pause */
+document.addEventListener('keydown',e=>{
+  if(e.target && e.target.tagName==='INPUT') return;
+  if(e.code==='Space'){ e.preventDefault(); onPrimary(); }
+  else if(e.key==='p'||e.key==='P'){ togglePause(); }
+});
+
+setMode('manual');
+</script>
+</body>
+</html>
