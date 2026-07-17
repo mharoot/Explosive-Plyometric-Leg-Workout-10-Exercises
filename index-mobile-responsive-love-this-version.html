@@ -204,38 +204,6 @@
 
   .kbd-focus:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
 
-  /* ---------- SETTINGS COG + REST LOG SHEET (add-on) ---------- */
-  .tg:disabled{opacity:.3;pointer-events:none;filter:grayscale(.7)}
-  /* at idle the start overlay is up; float the topbar above it so ⚙ stays tappable */
-  .app[data-state="idle"] .topbar{z-index:22}
-  .sheet{
-    position:absolute;left:10px;right:10px;bottom:calc(var(--bar-bot) + 14px + env(safe-area-inset-bottom));z-index:8;
-    background:rgba(17,17,24,.92);border:1px solid var(--line);border-radius:20px;padding:14px 14px 12px;
-    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-    box-shadow:0 18px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(var(--glow),.14), 0 0 34px rgba(var(--glow),.16);
-    opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .35s var(--ease),transform .35s var(--ease);
-  }
-  .sheet.show{opacity:1;transform:none;pointer-events:auto}
-  .sheet-head{display:flex;align-items:center;gap:8px;margin-bottom:2px}
-  .sheet-title{font-family:var(--font-display);font-size:17px;letter-spacing:.05em}
-  .sheet-close{margin-left:auto;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);font-size:12px;display:grid;place-items:center}
-  .sheet-rest{font-size:9.5px;color:var(--muted);letter-spacing:.14em;font-weight:600;margin:0 0 10px}
-  .sheet-rest b{font-family:var(--font-mono);color:var(--accent);font-size:12px}
-  .sheet-reps{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;border-radius:14px;background:rgba(var(--glow),.10);border:1px solid rgba(var(--glow),.3)}
-  .sheet-reps .field{flex:1}
-  .sheet-sub{font-size:8.5px;letter-spacing:.18em;color:var(--dim);font-weight:600;margin:0 0 6px}
-  .sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .sheet .field{gap:4px}
-  .sheet .stepper{border-radius:12px}
-  .sheet .stepper button{width:30px;height:38px;font-size:19px}
-  .sheet .stepper .val{min-width:30px;flex:1;font-size:18px}
-  .sheet-done{
-    width:100%;min-height:46px;margin-top:12px;border-radius:14px;font-family:var(--font-display);font-size:16px;letter-spacing:.05em;color:#0a0a0f;
-    background:linear-gradient(120deg,var(--a1),var(--a2));box-shadow:0 8px 22px rgba(var(--glow),.4), inset 0 1px 0 rgba(255,255,255,.3);
-  }
-  .sheet-done:active{transform:translateY(1px)}
-  @media (max-height:640px){ .sheet-reps{margin-bottom:7px;padding:6px 10px} .sheet-done{min-height:42px} }
-
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:.001ms !important;transition-duration:.12s !important}
   }
@@ -261,7 +229,6 @@
       <button class="tg" id="tgVoice" aria-pressed="true" title="Voice coaching" aria-label="Toggle voice coaching">🔊</button>
       <button class="tg" id="tgBeep" aria-pressed="true" title="Pacing beeps" aria-label="Toggle pacing beeps">♪</button>
       <button class="tg" id="tgPause" aria-pressed="false" title="Pause" aria-label="Pause workout">⏸</button>
-      <button class="tg" id="tgCog" title="Workout settings" aria-label="Open workout settings — goals and rest times">⚙</button>
     </div>
   </header>
 
@@ -339,41 +306,6 @@
     <button class="primary" id="primary"><span class="ico">▶</span><span id="primaryTxt">START</span></button>
   </footer>
 
-  <!-- REST LOG SHEET — pops up during every rest; the rest clock keeps running behind it -->
-  <div class="sheet" id="sheet" aria-hidden="true">
-    <div class="sheet-head">
-      <div class="sheet-title" id="shTitle">LOG · SET 1</div>
-      <button class="sheet-close" id="shClose" aria-label="Close log sheet">✕</button>
-    </div>
-    <div class="sheet-rest">RESTING · <b id="shRestVal">45</b>S LEFT — NEXT SET STARTS AUTOMATICALLY</div>
-    <div class="sheet-reps">
-      <div class="field">
-        <label>REPS YOU DID · SET <span id="shSetNo">1</span></label>
-        <div class="stepper">
-          <button id="shRepM" aria-label="Decrease reps done">−</button>
-          <div class="val"><span id="shRepV">15</span></div>
-          <button id="shRepP" aria-label="Increase reps done">+</button>
-        </div>
-      </div>
-    </div>
-    <div class="sheet-sub">ADJUST THIS EXERCISE — SAVED FOR NEXT TIME</div>
-    <div class="sheet-grid">
-      <div class="field">
-        <label>TARGET REPS</label>
-        <div class="stepper"><button id="shTgtM" aria-label="Decrease target reps">−</button><div class="val"><span id="shTgtV">15</span></div><button id="shTgtP" aria-label="Increase target reps">+</button></div>
-      </div>
-      <div class="field">
-        <label>SETS</label>
-        <div class="stepper"><button id="shSetM" aria-label="Decrease sets">−</button><div class="val"><span id="shSetV">4</span></div><button id="shSetP" aria-label="Increase sets">+</button></div>
-      </div>
-      <div class="field">
-        <label>REST S</label>
-        <div class="stepper"><button id="shRstM" aria-label="Decrease rest seconds">−</button><div class="val"><span id="shRstV">45</span></div><button id="shRstP" aria-label="Increase rest seconds">+</button></div>
-      </div>
-    </div>
-    <button class="sheet-done" id="shDone">✓ DONE — KEEP RESTING</button>
-  </div>
-
   <!-- START OVERLAY -->
   <div class="overlay" id="overlay">
     <div class="brand">PLYO<span class="sub">EXPLOSIVE CIRCUIT COACH</span></div>
@@ -382,7 +314,7 @@
       <div><span class="n" id="ovSets">—</span><span class="k">TOTAL SETS</span></div>
       <div><span class="n" id="ovMin">~18</span><span class="k">MINUTES</span></div>
     </div>
-    <p class="ov-note">Hands-free coaching with voice + pacing beeps. Log your real reps in the bottom bar as you go. Each exercise plays its looping clip from the <code>portrait/</code> or <code>widescreen/</code> folder — rotate the phone and it switches automatically. Tap <b>⚙</b> up top to set your own reps, sets &amp; rest — remembered on this device.</p>
+    <p class="ov-note">Hands-free coaching with voice + pacing beeps. Log your real reps in the bottom bar as you go. Each exercise plays its looping clip from the <code>portrait/</code> or <code>widescreen/</code> folder — rotate the phone and it switches automatically.</p>
     <button class="start-btn" id="startBtn"><span>▶</span> START WORKOUT</button>
   </div>
 
@@ -423,50 +355,6 @@
   ];
   const READY_SECS = 10;    // "get into position" countdown before the first set of an exercise
   const REGRIP_SECS = 4;    // short countdown between sets of the same exercise
-
-  /* ---------- SETTINGS + LOG COOKIES (add-on) ----------
-     plyoCfg : per-exercise goals [target,sets,rest] — written by the ⚙ settings
-               page (plyo-log.html) and by the mid-rest log sheet below.
-     plyoLog : reps actually done per set in the latest session.
-     Cookies are the source of truth; localStorage mirrors them so the data
-     also survives on file:// where some browsers refuse to keep cookies.  */
-  const CFG_KEY="plyoCfg", LOG_KEY="plyoLog";
-  function setStore(name,val){
-    try{ document.cookie = name+"="+encodeURIComponent(val)+"; max-age=31536000; path=/; SameSite=Lax"; }catch(e){}
-    try{ localStorage.setItem(name,val); }catch(e){}
-  }
-  function getStore(name){
-    try{
-      const m=document.cookie.match(new RegExp("(?:^|; )"+name+"=([^;]*)"));
-      if(m) return decodeURIComponent(m[1]);
-    }catch(e){}
-    try{ return localStorage.getItem(name); }catch(e){}
-    return null;
-  }
-  function loadCfg(){                       // apply saved goals (or keep the defaults above)
-    const raw=getStore(CFG_KEY); if(!raw) return;
-    try{
-      const c=JSON.parse(raw);
-      if(c && c.v===1 && Array.isArray(c.e)){
-        c.e.forEach((row,i)=>{
-          const ex=EXERCISES[i]; if(!ex || !Array.isArray(row)) return;
-          const t=Math.round(+row[0]), s=Math.round(+row[1]), r=Math.round(+row[2]);
-          if(t>=1 && t<=200) ex.target=t;
-          if(s>=1 && s<=30)  ex.sets=s;
-          if(r>=5 && r<=300) ex.rest=r;
-        });
-      }
-    }catch(e){}
-  }
-  loadCfg();
-  function persistCfg(){ setStore(CFG_KEY, JSON.stringify({v:1, e:EXERCISES.map(x=>[x.target,x.sets,x.rest])})); }
-  function persistLog(){
-    const r=EXERCISES.map(()=>[]);
-    S.log.forEach(rec=>{ if(r[rec.exIndex]) r[rec.exIndex][rec.set-1]=rec.actual; });
-    setStore(LOG_KEY, JSON.stringify({v:1, d:new Date().toISOString(), r:r}));
-  }
-  let persistT=null;
-  function schedulePersist(){ clearTimeout(persistT); persistT=setTimeout(()=>{ persistCfg(); persistLog(); },300); }
 
   /* ---------- GIF ORIENTATION ---------- */
   // Portrait phones load .../portrait/<file>; rotate to landscape and the same
@@ -608,12 +496,7 @@
     botbar:g("botbar"),repMinus:g("repMinus"),repPlus:g("repPlus"),repVal:g("repVal"),repTargetLbl:g("repTargetLbl"),
     setCur:g("setCur"),setTot:g("setTot"),primary:g("primary"),primaryTxt:g("primaryTxt"),
     overlay:g("overlay"),startBtn:g("startBtn"),ovEx:g("ovEx"),ovSets:g("ovSets"),ovMin:g("ovMin"),
-    report:g("report"),
-    tgCog:g("tgCog"),sheet:g("sheet"),shTitle:g("shTitle"),shClose:g("shClose"),shRestVal:g("shRestVal"),shSetNo:g("shSetNo"),
-    shRepM:g("shRepM"),shRepV:g("shRepV"),shRepP:g("shRepP"),
-    shTgtM:g("shTgtM"),shTgtV:g("shTgtV"),shTgtP:g("shTgtP"),
-    shSetM:g("shSetM"),shSetV:g("shSetV"),shSetP:g("shSetP"),
-    shRstM:g("shRstM"),shRstV:g("shRstV"),shRstP:g("shRstP"),shDone:g("shDone")
+    report:g("report")
   };
   const RING_C = 2*Math.PI*45;
   el.ring.setAttribute("stroke-dasharray", RING_C.toFixed(1));
@@ -648,9 +531,6 @@
     const t=THEME[state]||THEME.idle;
     el.app.style.setProperty("--a1",t.a1); el.app.style.setProperty("--a2",t.a2);
     el.app.style.setProperty("--glow",t.glow); el.app.style.setProperty("--accent",t.a1);
-    // cog is only live while no workout is running (idle / finished)
-    el.app.dataset.state = state;
-    el.tgCog.disabled = !(state==="idle" || state==="finished");
   }
   function totalSets(){ return EXERCISES.reduce((s,e)=>s+e.sets,0); }
 
@@ -736,47 +616,8 @@
       setPrimary("SKIP REST","⏭",true);
       speak("Rest. "+secs+" seconds.");
       S.lastVoiceCount=-1;
-      openSheet();
     }
     paintExercise();
-  }
-
-  /* ---------- REST LOG SHEET (add-on) ---------- */
-  function openSheet(){
-    if(!S.pending) return;
-    const ex=cur();
-    el.shTitle.textContent="LOG · SET "+S.pending.set;
-    el.shSetNo.textContent=S.pending.set;
-    el.shRepV.textContent=S.pending.actual;
-    el.shTgtV.textContent=ex.target; el.shSetV.textContent=ex.sets; el.shRstV.textContent=ex.rest;
-    el.shRestVal.textContent=Math.max(0,Math.ceil((S.phaseEnd-now())/1000));
-    el.sheet.classList.add("show"); el.sheet.setAttribute("aria-hidden","false");
-  }
-  function closeSheet(persist){
-    if(persist!==false){ persistCfg(); persistLog(); }
-    el.sheet.classList.remove("show"); el.sheet.setAttribute("aria-hidden","true");
-  }
-  function shBump(kind,d){
-    const ex=cur();
-    if(kind==="rep"){
-      if(!S.pending) return;
-      S.pending.actual=Math.max(0,Math.min(999,(+S.pending.actual||0)+d));
-      el.shRepV.textContent=S.pending.actual;
-    }
-    else if(kind==="tgt"){ ex.target=Math.max(1,Math.min(200,ex.target+d)); el.shTgtV.textContent=ex.target; }
-    else if(kind==="set"){
-      // can't drop below the sets already completed this session
-      ex.sets=Math.max(S.setNum,Math.min(30,ex.sets+d));
-      el.shSetV.textContent=ex.sets; buildDots();
-    }
-    else if(kind==="rst"){
-      ex.rest=Math.max(5,Math.min(300,ex.rest+d));
-      el.shRstV.textContent=ex.rest;
-      // re-time the rest that's counting down right now — elapsed time is kept,
-      // the deadline just moves; the ticking clock itself is never touched
-      if(S.state==="rest"){ S.phaseDur=ex.rest*1000; S.phaseEnd=S.phaseStart+S.phaseDur; }
-    }
-    paintExercise(); schedulePersist();
   }
 
   /* ---------- FLOW ---------- */
@@ -796,7 +637,6 @@
       actual:S.reps, setSeconds:Math.round(S.workMs/100)/10, restSeconds:null,
       startedAt:new Date(Date.now()-S.workMs).toISOString(), endedAt:new Date().toISOString() };
     S.log.push(rec); S.pending=rec;
-    schedulePersist();
     beep(660,0.1,0.2);
 
     const lastSetOfEx = S.setNum >= ex.sets;
@@ -806,19 +646,15 @@
   }
 
   function afterRest(skipped){
-    closeSheet();
     if(S.pending){ S.pending.restSeconds = Math.round((skipped? (S.phaseDur-(S.phaseEnd-now()))/1000 : S.phaseDur/1000)*10)/10; if(S.pending.restSeconds<0)S.pending.restSeconds=0; S.pending=null; }
     const ex=cur();
     if(S.setNum < ex.sets){ S.setNum++; paintExercise(); enter("regrip"); }
-    else if(S.exIndex >= EXERCISES.length-1){ finish(); }   // sets were reduced mid-rest on the last exercise
     else { S.exIndex++; S.setNum=1; mountVisual(); paintExercise(); enter("ready"); }
   }
 
   function finish(){
-    closeSheet(false);
     S.state="finished"; applyTheme("finished");
     S.sessionMs = now()-S.sessionStart;
-    persistCfg(); persistLog();
     el.stateLabel.textContent="DONE"; setDot(false);
     speak("Workout complete. Nice work.");
     beep(523,0.14,0.2); setTimeout(()=>beep(659,0.14,0.2),150); setTimeout(()=>beep(784,0.22,0.22),320);
@@ -841,7 +677,6 @@
       el.bigNum.textContent=secs;
       const frac=remain/S.phaseDur;
       el.ring.setAttribute("stroke-dashoffset",(RING_C*(1-frac)).toFixed(1)); // deplete
-      if(S.state==="rest" && el.sheet.classList.contains("show")) el.shRestVal.textContent=secs;
       // voice + beep countdown last 3s
       if(secs<=3 && secs>=1 && secs!==S.lastVoiceCount){ S.lastVoiceCount=secs; speak(String(secs)); beep(700,0.09,0.16); }
       if(remain<=0){
@@ -983,21 +818,6 @@
   }
   el.repMinus.addEventListener("click",()=>bumpRep(-1));
   el.repPlus.addEventListener("click",()=>bumpRep(1));
-
-  // ⚙ settings — only navigates when no workout is running (button is disabled otherwise)
-  el.tgCog.addEventListener("click",()=>{ if(!el.tgCog.disabled) location.href="plyo-log.html"; });
-
-  // rest log sheet
-  el.shClose.addEventListener("click",()=>closeSheet());
-  el.shDone .addEventListener("click",()=>closeSheet());
-  el.shRepM.addEventListener("click",()=>shBump("rep",-1));
-  el.shRepP.addEventListener("click",()=>shBump("rep", 1));
-  el.shTgtM.addEventListener("click",()=>shBump("tgt",-1));
-  el.shTgtP.addEventListener("click",()=>shBump("tgt", 1));
-  el.shSetM.addEventListener("click",()=>shBump("set",-1));
-  el.shSetP.addEventListener("click",()=>shBump("set", 1));
-  el.shRstM.addEventListener("click",()=>shBump("rst",-5));
-  el.shRstP.addEventListener("click",()=>shBump("rst", 5));
 
   el.tgVoice.addEventListener("click",()=>{ S.voice=!S.voice; el.tgVoice.setAttribute("aria-pressed",String(S.voice)); el.tgVoice.textContent=S.voice?"🔊":"🔇"; if(!S.voice&&window.speechSynthesis){try{window.speechSynthesis.cancel();}catch(e){}} });
   el.tgBeep.addEventListener("click",()=>{ S.beep=!S.beep; el.tgBeep.setAttribute("aria-pressed",String(S.beep)); el.tgBeep.textContent=S.beep?"♪":"—"; if(S.beep){actx();beep(700,0.08,0.14);} });

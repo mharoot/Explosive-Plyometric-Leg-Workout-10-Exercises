@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0B0B10" />
+<title>PLYO — Setup · Goals &amp; Rest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0B10; --ink2:#15151C; --panel:rgba(20,20,28,.72); --line:rgba(255,255,255,.09);
+    --text:#F5F5F7; --muted:#8A8A99; --dim:#5b5b6a;
+    --a1:#FF3D77; --a2:#FF7A3D; --glow:255,61,119; --accent:#FF3D77;
+    --font-display:"Anton","Arial Narrow",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --font-ui:"Inter",system-ui,-apple-system,sans-serif;
+    --bar-top:54px; --bar-bot:78px;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--text);font-family:var(--font-ui);overscroll-behavior:none}
+  body{display:flex;justify-content:center}
+  button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+
+  /* phone-frame on wide screens, full-bleed on phones — same shell as the workout */
+  .app{
+    position:relative;width:100%;max-width:560px;height:100dvh;height:100svh;
+    background:var(--ink);display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 0 120px rgba(0,0,0,.6);
+  }
+  .app::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:
+      radial-gradient(120% 60% at 50% -10%, rgba(var(--glow),.22), transparent 60%),
+      radial-gradient(120% 60% at 50% 110%, rgba(var(--glow),.14), transparent 62%);
+    mix-blend-mode:screen;
+  }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    position:relative;z-index:6;height:var(--bar-top);flex:0 0 auto;
+    display:flex;align-items:center;gap:10px;padding:0 12px;
+    background:linear-gradient(180deg,rgba(11,11,16,.92),rgba(11,11,16,.4));
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .tg{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:15px;color:var(--muted);transition:.18s}
+  .tg:active{transform:scale(.92)}
+  .ttl{font-family:var(--font-display);font-size:17px;letter-spacing:.06em;line-height:1}
+  .ttl small{display:block;font-family:var(--font-ui);font-weight:600;font-size:8px;letter-spacing:.2em;color:var(--dim);margin-top:2px}
+  .state-chip{
+    display:flex;align-items:center;gap:7px;margin-left:auto;padding:5px 11px 5px 9px;border-radius:999px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:#48e59b;box-shadow:0 0 10px #48e59b;transition:.3s}
+  .state-chip[data-dirty="true"] .dot{background:var(--a1);box-shadow:0 0 10px var(--a1);animation:dotpulse 1.1s var(--ease) infinite}
+  @keyframes dotpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.72)}}
+  .state-label{font-family:var(--font-display);font-size:13px;letter-spacing:.06em;line-height:1}
+
+  /* ---------- SCROLL BODY ---------- */
+  .scroll{
+    position:relative;z-index:4;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:16px 14px calc(20px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(130% 100% at 50% 0%, color-mix(in srgb, var(--a1) 14%, #101018) 0%, #0c0c12 46%, #08080c 100%);
+  }
+  .grid-bg{position:absolute;inset:0;opacity:.35;pointer-events:none;z-index:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:34px 34px;mask-image:radial-gradient(120% 60% at 50% 0%,#000 20%,transparent 70%)}
+
+  .note{font-size:12px;color:var(--muted);line-height:1.55;margin:2px 2px 14px;max-width:44ch}
+  .note b{color:var(--text)}
+
+  .stats{display:flex;gap:22px;margin:0 2px 16px}
+  .stats div{display:flex;flex-direction:column}
+  .stats .n{font-family:var(--font-mono);font-weight:700;font-size:22px;color:var(--text);font-variant-numeric:tabular-nums}
+  .stats .k{font-size:9px;letter-spacing:.16em;color:var(--dim);font-weight:600;margin-top:2px}
+
+  /* ---------- EXERCISE ROWS ---------- */
+  .exrow{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:12px 12px 13px;margin-bottom:10px;position:relative;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  .exrow::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;border-radius:2px;
+    background:linear-gradient(180deg,var(--a1),transparent 80%)}
+  .exhead{display:flex;align-items:baseline;gap:9px;margin:0 0 10px 8px}
+  .no{font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--dim)}
+  .nm{font-family:var(--font-display);font-size:18px;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+  .last{margin-left:auto;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--muted);
+    background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;padding:3px 7px;white-space:nowrap}
+  .last b{color:#48e59b}
+  .exgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-left:8px}
+
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field label{font-size:8.5px;letter-spacing:.2em;color:var(--dim);font-weight:600;padding-left:2px}
+  .stepper{display:flex;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .stepper button{width:30px;height:40px;font-size:19px;font-weight:600;color:var(--muted);display:grid;place-items:center;transition:.15s;flex:0 0 auto}
+  .stepper button:active{background:rgba(var(--glow),.25);color:#fff}
+  .stepper .val{flex:1;min-width:30px;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+
+  /* ---------- SECONDARY ACTIONS ---------- */
+  .actions{display:flex;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
+  .ghostbtn{
+    flex:1 1 30%;min-height:44px;border-radius:13px;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);
+    background:rgba(255,255,255,.05);border:1px solid var(--line);transition:.18s;white-space:nowrap;padding:0 10px;
+  }
+  .ghostbtn:active{transform:translateY(1px);color:var(--text)}
+
+  .storage-note{display:none;font-size:11px;line-height:1.5;color:#ffca8a;background:rgba(255,158,44,.08);
+    border:1px solid rgba(255,158,44,.3);border-radius:12px;padding:10px 12px;margin:0 0 14px}
+  .storage-note.show{display:block}
+
+  /* ---------- BOTTOM BAR ---------- */
+  .botbar{
+    position:relative;z-index:6;flex:0 0 auto;min-height:var(--bar-bot);
+    display:flex;align-items:center;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(0deg,rgba(11,11,16,.96),rgba(11,11,16,.6));
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);
+  }
+  .primary{
+    flex:1 1 auto;min-height:56px;border-radius:16px;font-family:var(--font-display);font-size:18px;letter-spacing:.05em;color:#0a0a0f;
+    background:linear-gradient(120deg,var(--a1),var(--a2));box-shadow:0 8px 26px rgba(var(--glow),.45), inset 0 1px 0 rgba(255,255,255,.35);
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s var(--ease),filter .2s;
+  }
+  .primary:active{transform:translateY(1px) scale(.99);filter:brightness(1.06)}
+  .primary.ghost{background:rgba(255,255,255,.06);color:var(--text);box-shadow:inset 0 0 0 1px var(--line);flex:0 1 auto;padding:0 16px;font-size:15px}
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:absolute;left:50%;bottom:calc(var(--bar-bot) + 18px);transform:translateX(-50%) translateY(12px);
+    background:rgba(17,17,24,.94);border:1px solid var(--line);border-radius:12px;padding:10px 16px;
+    font-size:12px;font-weight:600;z-index:30;opacity:0;pointer-events:none;
+    transition:opacity .25s var(--ease),transform .25s var(--ease);white-space:nowrap;max-width:92%;
+    box-shadow:0 12px 34px rgba(0,0,0,.5);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  input[type=file]{display:none}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important;transition-duration:.12s !important} }
+  @media (max-width:380px){ .exgrid{gap:6px} .stepper button{width:26px} .last{display:none} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <button class="tg" id="backTop" title="Back to workout" aria-label="Back to workout">←</button>
+    <div class="ttl">SETUP<small>GOALS &amp; REST · SAVED ON THIS DEVICE</small></div>
+    <div class="state-chip" id="chip" data-dirty="false">
+      <span class="dot"></span><span class="state-label" id="chipLabel">SAVED</span>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <main class="scroll">
+    <div class="grid-bg"></div>
+    <p class="note">Tune <b>target reps</b>, <b>sets</b> and <b>rest</b> for each of the 10 exercises, then hit <b>SAVE</b> — the workout loads these every time you train. Mid-workout, the rest-time log sheet writes back here too, so your goals track what you can actually do.</p>
+
+    <div class="storage-note" id="storageNote">Heads up — this environment blocks browser storage, so SAVE can’t stick here (that’s normal in the in-app preview). Open the file from your own device and it will. Download JSON works everywhere.</div>
+
+    <div class="stats">
+      <div><span class="n" id="stSets">—</span><span class="k">TOTAL SETS</span></div>
+      <div><span class="n" id="stMin">—</span><span class="k">EST MINUTES</span></div>
+      <div><span class="n" id="stLast">—</span><span class="k">LAST SESSION</span></div>
+    </div>
+
+    <div id="list"></div>
+
+    <div class="actions">
+      <button class="ghostbtn" id="btnDl">⤓ DOWNLOAD JSON</button>
+      <button class="ghostbtn" id="btnImport">⤒ IMPORT JSON</button>
+      <button class="ghostbtn" id="btnReset">↺ RESET DEFAULTS</button>
+    </div>
+    <input type="file" id="fileInput" accept="application/json,.json">
+  </main>
+
+  <!-- BOTTOM BAR -->
+  <footer class="botbar">
+    <button class="primary ghost" id="backBtn">← BACK TO WORKOUT</button>
+    <button class="primary" id="saveBtn">💾 SAVE</button>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+"use strict";
+(function(){
+  /* Program defaults — mirror the EXERCISES table in index.html exactly. */
+  const DEFAULTS = [
+    ["Jump Squats",               15, 4, 45],
+    ["Jumping Lunges",            16, 4, 45],
+    ["Lateral Bounds",            20, 3, 40],
+    ["A-Skips",                   30, 3, 35],
+    ["Reverse Lunge Knee Drives", 12, 4, 45],
+    ["Tuck Jumps",                12, 3, 50],
+    ["High Knees",                30, 3, 35],
+    ["Heel Kicks",                30, 3, 35],
+    ["Kneeling Jumps",            10, 4, 60],
+    ["Calve Jumps",               25, 3, 30],
+  ];
+  const READY_SECS = 10;
+  const LIM = { t:[1,200], s:[1,30], r:[5,300] };
+  const CFG_KEY="plyoCfg", LOG_KEY="plyoLog";
+
+  /* ---- same cookie-first storage as index.html (localStorage mirror for file://) ---- */
+  function setStore(name,val){
+    try{ document.cookie = name+"="+encodeURIComponent(val)+"; max-age=31536000; path=/; SameSite=Lax"; }catch(e){}
+    try{ localStorage.setItem(name,val); }catch(e){}
+  }
+  function getStore(name){
+    try{
+      const m=document.cookie.match(new RegExp("(?:^|; )"+name+"=([^;]*)"));
+      if(m) return decodeURIComponent(m[1]);
+    }catch(e){}
+    try{ return localStorage.getItem(name); }catch(e){}
+    return null;
+  }
+  function storageWorks(){
+    const k="plyoProbe", v=String(Date.now());
+    setStore(k,v);
+    const ok = getStore(k)===v;
+    try{ document.cookie=k+"=; max-age=0; path=/"; }catch(e){}
+    try{ localStorage.removeItem(k); }catch(e){}
+    return ok;
+  }
+
+  /* ---- state ---- */
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(+v)||lo));
+  let goals = DEFAULTS.map(d=>({name:d[0], target:d[1], sets:d[2], rest:d[3]}));
+  let dirty = false;
+  let lastLog = null;
+
+  (function loadSaved(){
+    const raw=getStore(CFG_KEY);
+    if(raw){ try{
+      const c=JSON.parse(raw);
+      if(c && c.v===1 && Array.isArray(c.e)) c.e.forEach((row,i)=>{
+        if(!goals[i] || !Array.isArray(row)) return;
+        goals[i].target=clamp(row[0],LIM.t[0],LIM.t[1]);
+        goals[i].sets  =clamp(row[1],LIM.s[0],LIM.s[1]);
+        goals[i].rest  =clamp(row[2],LIM.r[0],LIM.r[1]);
+      });
+    }catch(e){} }
+    const lraw=getStore(LOG_KEY);
+    if(lraw){ try{
+      const l=JSON.parse(lraw);
+      if(l && l.v===1 && Array.isArray(l.r)) lastLog=l;
+    }catch(e){} }
+  })();
+
+  /* ---- DOM ---- */
+  function g(id){ return document.getElementById(id); }
+  const listEl=g("list"), chip=g("chip"), chipLabel=g("chipLabel");
+  const vals=[]; // per-exercise {t,s,r} value spans
+
+  function setDirty(d){
+    dirty=d;
+    chip.dataset.dirty=String(d);
+    chipLabel.textContent = d ? "UNSAVED" : "SAVED";
+  }
+  function bump(i,key,d){
+    const lim = key==="target"?LIM.t : key==="sets"?LIM.s : LIM.r;
+    goals[i][key]=clamp(goals[i][key]+d, lim[0], lim[1]);
+    const v=vals[i][key==="target"?"t":key==="sets"?"s":"r"];
+    v.textContent=goals[i][key];
+    if(v.animate) v.animate([{transform:"scale(1.22)"},{transform:"scale(1)"}],{duration:150,easing:"ease-out"});
+    setDirty(true); recalc();
+  }
+  function stepperEl(i,key,label,step){
+    const f=document.createElement("div"); f.className="field";
+    const l=document.createElement("label"); l.textContent=label;
+    const st=document.createElement("div"); st.className="stepper";
+    const m=document.createElement("button"); m.textContent="−"; m.setAttribute("aria-label","Decrease "+label+" for "+goals[i].name);
+    const v=document.createElement("div"); v.className="val";
+    const p=document.createElement("button"); p.textContent="+"; p.setAttribute("aria-label","Increase "+label+" for "+goals[i].name);
+    m.addEventListener("click",()=>bump(i,key,-step));
+    p.addEventListener("click",()=>bump(i,key, step));
+    st.append(m,v,p); f.append(l,st);
+    return {f,v};
+  }
+  function lastFor(i){
+    if(!lastLog || !Array.isArray(lastLog.r[i]) || !lastLog.r[i].length) return null;
+    return lastLog.r[i].map(x=>x==null?"–":x).join("·");
+  }
+  function render(){
+    listEl.innerHTML=""; vals.length=0;
+    goals.forEach((ex,i)=>{
+      const row=document.createElement("div"); row.className="exrow";
+      const head=document.createElement("div"); head.className="exhead";
+      head.innerHTML="<span class='no'>"+String(i+1).padStart(2,"0")+"</span><span class='nm'></span>";
+      head.querySelector(".nm").textContent=ex.name;
+      const last=lastFor(i);
+      if(last){
+        const chipEl=document.createElement("span"); chipEl.className="last";
+        chipEl.innerHTML="LAST <b></b>"; chipEl.querySelector("b").textContent=last;
+        chipEl.title="Reps you logged per set, last session";
+        head.appendChild(chipEl);
+      }
+      const grid=document.createElement("div"); grid.className="exgrid";
+      const t=stepperEl(i,"target","TARGET REPS",1);
+      const s=stepperEl(i,"sets","SETS",1);
+      const r=stepperEl(i,"rest","REST S",5);
+      grid.append(t.f,s.f,r.f);
+      vals[i]={t:t.v,s:s.v,r:r.v};
+      t.v.textContent=ex.target; s.v.textContent=ex.sets; r.v.textContent=ex.rest;
+      row.append(head,grid);
+      listEl.appendChild(row);
+    });
+    recalc();
+  }
+  function recalc(){
+    let sets=0, secs=0;
+    goals.forEach(x=>{ sets+=x.sets; secs += x.sets*35 + x.sets*x.rest + READY_SECS; });
+    g("stSets").textContent=sets;
+    g("stMin").textContent="~"+Math.round(secs/60);
+    g("stLast").textContent = lastLog ? new Date(lastLog.d).toLocaleDateString(undefined,{month:"short",day:"numeric"}) : "—";
+  }
+
+  /* ---- actions ---- */
+  let toastT=null;
+  function toast(msg){
+    const t=g("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2100);
+  }
+  function save(){
+    setStore(CFG_KEY, JSON.stringify({v:1, e:goals.map(x=>[x.target,x.sets,x.rest])}));
+    if(storageOK){ setDirty(false); toast("Saved — the workout now uses these goals"); }
+    else toast("Storage is blocked here — use Download JSON");
+  }
+  function goBack(){
+    if(dirty && !confirm("You have unsaved changes. Leave without saving?")) return;
+    dirty=false; // don't double-prompt via beforeunload
+    location.href="index.html";
+  }
+  function download(){
+    const payload={
+      app:"PLYO", kind:"goals+lastSession", version:1, savedAt:new Date().toISOString(),
+      config:goals.map(x=>({name:x.name,target:x.target,sets:x.sets,rest:x.rest})),
+      lastSession: lastLog ? { date:lastLog.d, repsPerSet:goals.map((x,i)=>({name:x.name, reps:lastLog.r[i]||[]})) } : null
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="plyo-goals-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    toast("Downloaded "+a.download);
+  }
+  function importJSON(file){
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        const o=JSON.parse(rd.result);
+        const cfg = Array.isArray(o?.config) ? o.config
+                  : (o && o.v===1 && Array.isArray(o.e)) ? o.e.map(row=>({target:row[0],sets:row[1],rest:row[2]}))
+                  : null;
+        if(!cfg) throw 0;
+        cfg.slice(0,goals.length).forEach((c,i)=>{
+          goals[i].target=clamp(c.target,LIM.t[0],LIM.t[1]);
+          goals[i].sets  =clamp(c.sets,  LIM.s[0],LIM.s[1]);
+          goals[i].rest  =clamp(c.rest,  LIM.r[0],LIM.r[1]);
+        });
+        render(); setDirty(true);
+        toast("Imported — tap SAVE to keep");
+      }catch(e){ toast("That file isn’t a PLYO goals JSON"); }
+    };
+    rd.onerror=()=>toast("Couldn’t read that file");
+    rd.readAsText(file);
+  }
+  function resetDefaults(){
+    if(!confirm("Restore the program defaults for all 10 exercises?")) return;
+    goals = DEFAULTS.map(d=>({name:d[0], target:d[1], sets:d[2], rest:d[3]}));
+    render(); setDirty(true);
+    toast("Defaults restored — tap SAVE to keep");
+  }
+
+  /* ---- wire + boot ---- */
+  const storageOK = storageWorks();
+  if(!storageOK) g("storageNote").classList.add("show");
+
+  g("saveBtn").addEventListener("click",save);
+  g("backBtn").addEventListener("click",goBack);
+  g("backTop").addEventListener("click",goBack);
+  g("btnDl").addEventListener("click",download);
+  g("btnReset").addEventListener("click",resetDefaults);
+  g("btnImport").addEventListener("click",()=>g("fileInput").click());
+  g("fileInput").addEventListener("change",e=>{
+    if(e.target.files && e.target.files[0]) importJSON(e.target.files[0]);
+    e.target.value="";
+  });
+  window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+
+  render(); setDirty(false);
+})();
+</script>
+</body>
+</html>
